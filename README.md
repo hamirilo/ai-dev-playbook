@@ -24,6 +24,7 @@ StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側�
 | 機能追加・バグ修正・リファクタリング | [AI支援開発](playbooks/ai-assisted-development.md) |
 | Djangoの実装・変更 | [Django実装](playbooks/django-implementation.md) |
 | テスト・レビュー・UI確認 | [テストとレビュー](playbooks/testing-and-review.md) |
+| 品質・性能・アクセシビリティ確認 | [品質確認](playbooks/quality-checks.md) |
 | 認証・認可・エラー・外部通信 | [安全な実装とエラー処理](playbooks/security-and-error-handling.md) |
 | APIを追加・変更 | [API実装](playbooks/api-implementation.md) |
 
