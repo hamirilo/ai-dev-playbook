@@ -90,6 +90,16 @@ record = get_object_or_404(
 - React Islandを使うことだけを理由にAPIを増やさない
 - DjangoからReactへデータを渡すときは安全なシリアライズ手段を使い、文字列連結でJSONを埋め込まない
 - 状態変更ではCSRF保護を維持する
+- 初期描画に影響する状態（テーマ、言語、表示密度など）はサーバーHTMLと`<head>`内の同期スクリプトで最初のペイント前に確定させ、React Islandはその結果を読むだけにする。Islandがマウント時にlocalStorage等から再計算して書き戻すと、マウント遅延の分だけ表示がちらつく
+
+## 初期描画の安定化（テーマ・FOUC）
+
+[Application UI Standard「初期描画の安定性」](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/application-ui/README.md)をテーマ切り替えのあるページで実装するときの手順。
+
+- テーマ属性（`data-theme`等）は、CSSやJSバンドルの読み込みを待たず、`<head>`先頭の同期スクリプトでlocalStorageと`prefers-color-scheme`から決めて付与する
+- `color-scheme`をライト・ダーク両方のスコープで宣言する。無いとスクロールバー、フォームコントロール、描画前のキャンバスがブラウザ既定の白のままになり、ページ遷移ごとに白がちらつく
+- FOUC対策で`html { visibility: hidden }`を使う場合、`html`の背景は描画され続けるため、同じインラインCSSでテーマ別の地色も先に与える
+- 検証は「OS設定 × 保存済みテーマ」の組み合わせ（未保存 + OSダーク が最もちらつきやすい）を、ビルド済みアセットで確認する
 
 ## 変更後の検証
 
@@ -107,4 +117,5 @@ record = get_object_or_404(
 - 一覧で関連を遅延取得したままにする
 - 小さな処理のために新しい抽象レイヤーを作る
 - React側とDjango側に同じ業務ロジックを複製する
+- Djangoテンプレートの`{# #}`を複数行に使う（1行専用。跨ぐと除去されず出力へ混入し、`<head>`内では暗黙の`</head>`で後続スクリプトが壊れる。複数行は`{% comment %}`を使う）
 
