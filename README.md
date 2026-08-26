@@ -27,6 +27,7 @@ StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側�
 | 品質・性能・アクセシビリティ確認 | [品質確認](playbooks/quality-checks.md) |
 | 認証・認可・エラー・外部通信 | [安全な実装とエラー処理](playbooks/security-and-error-handling.md) |
 | APIを追加・変更 | [API実装](playbooks/api-implementation.md) |
+| コンテナ化・イメージ配布・既存環境の移行 | [コンテナ配布](playbooks/container-delivery.md) |
 
 ## 増やさないもの
 
