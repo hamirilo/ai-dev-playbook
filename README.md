@@ -28,6 +28,7 @@ StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側�
 | 認証・認可・エラー・外部通信 | [安全な実装とエラー処理](playbooks/security-and-error-handling.md) |
 | APIを追加・変更 | [API実装](playbooks/api-implementation.md) |
 | コンテナ化・イメージ配布・既存環境の移行 | [コンテナ配布](playbooks/container-delivery.md) |
+| Docker Composeの不要なホストポート公開を整理 | [Docker Compose ポート公開](playbooks/docker-compose-port-exposure.md) |
 
 ## 増やさないもの
 
@@ -65,4 +66,3 @@ StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側�
 ## 公開範囲
 
 公開リポジトリとして扱える一般化された内容だけを置きます。社内URL、認証情報、個人情報、組織固有のモデル・運用、非公開の障害情報は追加しません。
-
