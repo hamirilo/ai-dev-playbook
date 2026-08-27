@@ -2,7 +2,7 @@
 
 既存のDocker Compose構成で `ports:` を棚卸しし、必要な入口だけをホストへ公開するためのPlaybookです。
 
-判断原則は [Architecture Standard: Docker Compose ネットワークとポート公開](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/architecture/container-network.md) を正とします。
+判断原則は [Architecture Standard: Docker Compose ネットワークとポート公開](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/architecture/optional/container-network.md) を正とします。
 
 ## 使う場面
 
@@ -37,7 +37,9 @@ PostgreSQL / Redis / Celery
 
 まず、リポジトリ内でComposeと接続先の定義を確認します。ファイル名を決め打ちせず、存在するものだけを対象にします。
 
-- `compose.yml`, `docker-compose.yml`, `docker-compose.*.yml`
+- `compose.yaml`, `compose.yml`
+- `docker-compose.yaml`, `docker-compose.yml`
+- `compose.*.yaml`, `compose.*.yml`, `docker-compose.*.yaml`, `docker-compose.*.yml`
 - `.env` と環境変数定義
 - DjangoのDATABASE設定
 - Redis接続設定
@@ -45,6 +47,8 @@ PostgreSQL / Redis / Celery
 - Vite等の開発サーバ設定
 - nginx等が存在する場合の設定
 - README、Makefile、justfile、開発用スクリプト等に記載されたポート番号
+
+複数のComposeファイルや `-f` 指定を利用している場合は、個別ファイルだけで判断せず `docker compose config` で実効構成も確認します。
 
 すべての `ports:` を洗い出し、各サービスについて次を確認します。
 
@@ -61,12 +65,25 @@ PostgreSQL / Redis / Celery
 
 Caddy等をまだ導入しない段階では、ブラウザやLANからアクセスするWebサービスのホストポートを維持します。
 
+LAN内の別端末からアクセスする必要がある場合:
+
 ```yaml
 services:
   web:
     ports:
       - "8001:8000"
 ```
+
+ホストOS上のブラウザからだけアクセスできればよい場合:
+
+```yaml
+services:
+  web:
+    ports:
+      - "127.0.0.1:8001:8000"
+```
+
+ホストIPを省略した `8001:8000` は全インターフェースへbindされるため、LAN公開が不要な場合には使用しません。
 
 複数プロジェクトではホスト側の `8001` を変えて競合を避けて構いません。コンテナ内部の `8000` は理由がなければ変更しません。
 
