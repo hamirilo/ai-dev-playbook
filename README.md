@@ -57,7 +57,7 @@ StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側�
 | 内容 | 配置先 |
 |---|---|
 | 全体で守る判断原則 | `ai-dev-standards` |
-| 現時点のライブラリの既定 | `ai-dev-standards/recommendations` |
+| 現時点のライブラリの既定 | `ai-dev-platform/recommendations` |
 | 実装手順・検証・失敗例 | `ai-dev-playbook` |
 | コピーして使う雛形 | 将来のTemplateリポジトリまたはプロジェクト側 |
 | 実行可能な共通コード | 実際の利用実績を確認した後、別Packageリポジトリ |
