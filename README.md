@@ -31,7 +31,7 @@ StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側�
 | コンテナ化・イメージ配布・既存環境の移行 | [コンテナ配布](playbooks/container-delivery.md) |
 | Docker Composeの不要なホストポート公開を整理 | [Docker Compose ポート公開](playbooks/docker-compose-port-exposure.md) |
 
-UIの設計候補、Pattern、Template、再利用Component、Storybook Catalogは [UI Platform](https://github.com/hamirilo/ui-platform) を参照します。Playbookで扱うUI関連事項は、実装後の検証、アクセシビリティ確認、ブラウザ確認などの「どう検証するか」に限定します。
+UIの設計候補、Pattern、Template、再利用Component、Storybook Catalogは [UI Platform](https://github.com/hamirilo/ui-platform) を参照します。一方、React境界、Djangoとの接続、ブラウザセキュリティ、エラー処理、アクセシビリティや実ブラウザ確認など、**UIに関係していても一般化できる実装・検証手順**はPlaybookで扱います。
 
 ## 増やさないもの
 
