@@ -1,7 +1,7 @@
 # AI支援開発の進め方
 
 機能追加、バグ修正、リファクタリングをAIエージェントと進めるときの実行手順です。
-全体の判断原則は [AI Development Standards](https://github.com/hamirilo/ai-dev-standards) を先に確認します。
+全体の判断原則は [AI Development Standards](https://github.com/jazmf-dx/ai-dev-standards) を先に確認します。
 
 ## 使う場面
 

@@ -1,6 +1,6 @@
 # 安全な実装とエラー処理
 
-この文書は、[Architecture Standard](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/architecture/README.md) の安全性に関する原則を、実装時に確認するための手順です。
+この文書は、[Architecture Standard](https://github.com/jazmf-dx/ai-dev-standards/blob/main/standards/architecture/README.md) の安全性に関する原則を、実装時に確認するための手順です。
 
 ## 変更前に境界を確認する
 

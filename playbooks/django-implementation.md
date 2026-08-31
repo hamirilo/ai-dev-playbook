@@ -1,6 +1,6 @@
 # Django実装プレイブック
 
-[Architecture Standard](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/architecture/README.md) の判断を、Djangoで実装するときの具体的な進め方です。
+[Architecture Standard](https://github.com/jazmf-dx/ai-dev-standards/blob/main/standards/architecture/README.md) の判断を、Djangoで実装するときの具体的な進め方です。
 
 ## 責務の置き場所
 
@@ -94,7 +94,7 @@ record = get_object_or_404(
 
 ## 初期描画の安定化（テーマ・FOUC）
 
-[Application UI Standard「初期描画の安定性」](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/application-ui/README.md)をテーマ切り替えのあるページで実装するときの手順。
+[Application UI Standard「初期描画の安定性」](https://github.com/jazmf-dx/ai-dev-standards/blob/main/standards/application-ui/README.md)をテーマ切り替えのあるページで実装するときの手順。
 
 - テーマ属性（`data-theme`等）は、CSSやJSバンドルの読み込みを待たず、`<head>`先頭の同期スクリプトでlocalStorageと`prefers-color-scheme`から決めて付与する
 - `color-scheme`をライト・ダーク両方のスコープで宣言する。無いとスクロールバー、フォームコントロール、描画前のキャンバスがブラウザ既定の白のままになり、ページ遷移ごとに白がちらつく

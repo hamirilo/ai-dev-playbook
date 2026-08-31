@@ -2,7 +2,7 @@
 
 既存のDocker Compose構成で `ports:` を棚卸しし、必要な入口だけをホストへ公開するためのPlaybookです。
 
-判断原則は [Architecture Standard: Docker Compose ネットワークとポート公開](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/architecture/optional/container-network.md) を正とします。
+判断原則は [Architecture Standard: Docker Compose ネットワークとポート公開](https://github.com/jazmf-dx/ai-dev-standards/blob/main/standards/architecture/optional/container-network.md) を正とします。
 
 ## 使う場面
 

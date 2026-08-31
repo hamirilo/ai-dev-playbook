@@ -123,5 +123,5 @@ PRや完了報告には、必要に応じて次を含めます。
 
 ## 関連
 
-- [品質向上の推奨チェック](https://github.com/hamirilo/ai-dev-standards/blob/main/recommendations/quality.md)
+- [品質向上の推奨チェック](https://github.com/jazmf-dx/ai-dev-platform/blob/main/recommendations/quality.md)
 - [テスト・レビュー・UI確認](testing-and-review.md)

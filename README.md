@@ -8,10 +8,10 @@
 
 | 資産 | 答える問い |
 |---|---|
-| [AI Development Standards](https://github.com/hamirilo/ai-dev-standards) | 何を守るか |
+| [AI Development Standards](https://github.com/jazmf-dx/ai-dev-standards) | 何を守るか |
 | `ai-dev-platform/recommendations` | 普段は何を選ぶか |
 | **このリポジトリ** | どう実装するか・どう検証するか・どう直すか |
-| [UI Platform](https://github.com/hamirilo/ui-platform) | どんなUIにするか・何を再利用するか |
+| [UI Platform](https://github.com/jazmf-dx/ui-platform) | どんなUIにするか・何を再利用するか |
 | プロジェクト側 | ドメイン固有の判断・実装・運用 |
 
 StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側の明示的な決定を優先します。
@@ -31,7 +31,7 @@ StandardとPlaybookが矛盾する場合は、Standardとプロジェクト側�
 | コンテナ化・イメージ配布・既存環境の移行 | [コンテナ配布](playbooks/container-delivery.md) |
 | Docker Composeの不要なホストポート公開を整理 | [Docker Compose ポート公開](playbooks/docker-compose-port-exposure.md) |
 
-UIの設計候補、Pattern、Template、再利用Component、Storybook Catalogは [UI Platform](https://github.com/hamirilo/ui-platform) を参照します。一方、React境界、Djangoとの接続、ブラウザセキュリティ、エラー処理、アクセシビリティや実ブラウザ確認など、**UIに関係していても一般化できる実装・検証手順**はPlaybookで扱います。
+UIの設計候補、Pattern、Template、再利用Component、Storybook Catalogは [UI Platform](https://github.com/jazmf-dx/ui-platform) を参照します。一方、React境界、Djangoとの接続、ブラウザセキュリティ、エラー処理、アクセシビリティや実ブラウザ確認など、**UIに関係していても一般化できる実装・検証手順**はPlaybookで扱います。
 
 ## 増やさないもの
 
