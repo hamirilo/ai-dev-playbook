@@ -2,7 +2,7 @@
 
 コンテナで配布するDjango + React Islandsアプリケーションを、CIで作成・検証し、実行環境では同一イメージをpullして起動するためのPlaybookです。
 
-判断の根拠と必須事項は、[Architecture Standard: コンテナと配布](https://github.com/hamirilo/ai-dev-standards/blob/main/standards/architecture/README.md#10-コンテナと配布)を正とします。
+判断の根拠と必須事項は、[Architecture Standard: コンテナと配布](https://github.com/jazmf-dx/ai-dev-standards/blob/main/standards/architecture/README.md#10-コンテナと配布)を正とします。
 
 ## 使う場面
 
