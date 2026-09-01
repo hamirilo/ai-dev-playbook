@@ -71,6 +71,7 @@ code例と失敗例は独立した `examples/` を増やさず、関係するPla
 ## 公開範囲
 
 公開repositoryとして扱える一般化された内容だけを置きます。社内URL、認証情報、個人情報、組織固有model・運用、非公開の障害情報は追加しません。
+
 ## リリース
 
 正式なversionはSemVer形式のGitHub Release（`v<major>.<minor>.<patch>`）で示します。tagだけを単独で作らず、利用者が変更内容を確認できるReleaseを作成します。
