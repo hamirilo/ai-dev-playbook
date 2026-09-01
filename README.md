@@ -71,3 +71,13 @@ code例と失敗例は独立した `examples/` を増やさず、関係するPla
 ## 公開範囲
 
 公開repositoryとして扱える一般化された内容だけを置きます。社内URL、認証情報、個人情報、組織固有model・運用、非公開の障害情報は追加しません。
+
+## リリース
+
+正式なversionはSemVer形式のGitHub Release（`v<major>.<minor>.<patch>`）で示します。tagだけを単独で作らず、利用者が変更内容を確認できるReleaseを作成します。
+
+現時点では自動release workflowを持たないため、releaseが必要な変更をまとめ、SemVerに従ってGitHub Releaseを手動で作成します。各mergeのたびにreleaseする必要はありません。
+
+Playbookをreleaseしただけでは、Platform利用者の組合せは変わりません。Standardsとの整合を確認した後、`ai-dev-platform`のsubmodule pointerを更新してPlatformをreleaseした時点で、推奨する組合せが確定します。
+
+SemVerの判断、共有資産間のrelease順序、Platform releaseの扱いは[AI Development Platformのリリース方針](https://github.com/hamirilo/ai-dev-platform/blob/main/docs/release.md)を参照してください。
