@@ -32,6 +32,7 @@ StandardとPlaybookが矛盾する場合はStandardを優先します。Project�
 | APIを追加・変更 | [API実装](playbooks/api-implementation.md) |
 | container化・image配布・既存環境の移行 | [コンテナ配布](playbooks/container-delivery.md) |
 | Docker Composeのhost port公開を整理 | [Docker Compose ポート公開](playbooks/docker-compose-port-exposure.md) |
+| 共有repositoryをversioning・release | [リポジトリのリリース](playbooks/repository-release.md) |
 
 UIのComponent、Pattern、Template、Storybook Catalog、design referenceはUI Platformを参照します。ReactとDjangoの接続、security、error handling、実browser検証等、UIに関係していても一般化できる **実施方法** はPlaybookで扱います。
 
@@ -76,7 +77,7 @@ code例と失敗例は独立した `examples/` を増やさず、関係するPla
 
 正式なversionはSemVer形式のGitHub Release（`v<major>.<minor>.<patch>`）で示します。tagだけを単独で作らず、利用者が変更内容を確認できるReleaseを作成します。
 
-現時点では自動release workflowを持たないため、releaseが必要な変更をまとめ、SemVerに従ってGitHub Releaseを手動で作成します。各mergeのたびにreleaseする必要はありません。
+本リポジトリではRelease Pleaseを利用します。`main`へのmerge後に作成・更新されるrelease PRでversionと`CHANGELOG.md`を確認し、そのPRをmergeしてtagとGitHub Releaseを作成します。各mergeのたびにreleaseする必要はありません。具体的な導入・運用・失敗時の確認は[リポジトリのリリース](playbooks/repository-release.md)を参照してください。
 
 Playbookをreleaseしただけでは、Platform利用者の組合せは変わりません。Standardsとの整合を確認した後、`ai-dev-platform`のsubmodule pointerを更新してPlatformをreleaseした時点で、推奨する組合せが確定します。
 
