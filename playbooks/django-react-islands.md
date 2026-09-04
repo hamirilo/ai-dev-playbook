@@ -20,7 +20,7 @@ Componentのpropsと見た目はUI PlatformのStorybook（「はじめに / Djan
 - htmxはkitの依存ではない。Templateの `<head>` で `window.htmx` として読み込む
 - Islandを置く画面のroutingとFormはDjangoにある。Islandのために新しいJSON endpointを作らない（Architecture Standard §8）
 - 業務domain固有のIslandはApplication側に置く（Application UI Standard §6）
-- 見せ方だけの島とconfirm-hostはkit 6.3以上
+- 見せ方だけの島（tabs / disclosure / field-visibility）とconfirm-hostは、それらを提供する `application-ui-kit` のversion以降で使える。採用しているversionに含まれるかはUI PlatformのCHANGELOGとStorybook「Django Islands」で確認する（本Playbookはversion番号を固定しない）
 
 ## 手順
 
