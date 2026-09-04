@@ -26,6 +26,7 @@ StandardとPlaybookが矛盾する場合はStandardを優先します。Project�
 |---|---|
 | 機能追加・bug修正・refactoring | [AI支援開発](playbooks/ai-assisted-development.md) |
 | Djangoの実装・変更 | [Django実装](playbooks/django-implementation.md) |
+| Django TemplateへReact Island / htmxを接続する | [DjangoとReact Islandsの接続](playbooks/django-react-islands.md) |
 | test・review・UI確認 | [テストとレビュー](playbooks/testing-and-review.md) |
 | 品質・性能・accessibility確認 | [品質確認](playbooks/quality-checks.md) |
 | 認証・認可・error・外部通信 | [安全な実装とエラー処理](playbooks/security-and-error-handling.md) |
