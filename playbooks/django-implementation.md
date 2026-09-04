@@ -91,6 +91,7 @@ record = get_object_or_404(
 - DjangoからReactへデータを渡すときは安全なシリアライズ手段を使い、文字列連結でJSONを埋め込まない
 - 状態変更ではCSRF保護を維持する
 - 初期描画に影響する状態（テーマ、言語、表示密度など）はサーバーHTMLと`<head>`内の同期スクリプトで最初のペイント前に確定させ、React Islandはその結果を読むだけにする。Islandがマウント時にlocalStorage等から再計算して書き戻すと、マウント遅延の分だけ表示がちらつく
+- mount、htmx、CSRF、toast、確認dialog、見せ方だけの島の具体的な接続手順は [DjangoとReact Islandsの接続](django-react-islands.md) を参照する
 
 ## 初期描画の安定化（テーマ・FOUC）
 
