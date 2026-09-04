@@ -39,7 +39,7 @@ import 'application-ui-kit/islands/auto-mount'
 
 - `<div data-react="…">` を置く。propsは個別の `data-*` か `data-props`（JSON）で渡す
 - Django側で `json.dumps()` した文字列を `data-props="{{ props_json }}"` と書き、autoescapeに任せる。`|safe` を付けない
-- 個別 `data-*` はJSONとして解釈される（`data-count="3"` は数値、`"true"` は真偽値）。URL・token・大きな数値IDを文字列で保ちたい値は `data-props` 側に入れる
+- 個別 `data-*` はJSONとして解釈される（`data-count="3"` は数値、`"true"` は真偽値）。URL・token・IDなど文字列で保ちたい値は `data-props` 側に入れ、**Django側で `str()` にしてから** `json.dumps()` する。`json.dumps({"recordId": 9007199254740993})` は数値のまま出力され、JavaScriptの `JSON.parse` が `9007199254740992` に丸める（モデルのIDは整数なので、`str(obj.pk)` のように必ず文字列化する）
 - 入力値を含むpropsをHTML属性へ文字列連結しない（[安全な実装とエラー処理](security-and-error-handling.md)「CSRFとブラウザ境界」）
 
 ### 3. toastを1本にする
@@ -62,6 +62,7 @@ import 'application-ui-kit/islands/auto-mount'
 
 - htmxは `<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>` に1箇所だけ書く
 - IslandのfetchはCookieからtokenを読む。`CSRF_COOKIE_NAME` を変更しているprojectは `data-csrf-cookie-name` を **すべての** state変更Island（confirm-dialog / confirm-host）へ渡す。context processorで1箇所から出す
+- **前提: CSRF cookieがJavaScriptから読めること。** `CSRF_USE_SESSIONS = True` または `CSRF_COOKIE_HTTPONLY = True` のprojectではcookie名を合わせても読めず、Islandのfetchは403になる。この構成では `url` を持つ `confirm-modal` / confirm-dialog のfetch経路を使わず、確認後の送信をhtmx（`hx-headers` でtokenを渡す）かDjango Formの通常送信に寄せる
 - cookie名をJavaScriptに直書きしない（`document.cookie.match(/csrftoken=/)` のような形は設定変更で静かに403になる）
 
 ### 6. 確認dialog
@@ -95,7 +96,7 @@ import 'application-ui-kit/islands/auto-mount'
 ## 検証
 
 - 画面をhtmxで差し替えた後もIslandが動く（consoleに `[React Islands] Component "…" not found` が出ない）
-- `CSRF_COOKIE_NAME` を既定以外にしてもPOSTが403にならない
+- `CSRF_COOKIE_NAME` を既定以外にしてもPOSTが403にならない。`CSRF_USE_SESSIONS` / `CSRF_COOKIE_HTTPONLY` を使うprojectでは、Islandのfetch経路を使っていない
 - messages / `HX-Trigger` / JS呼び出しの3経路でtoastが出る
 - 見せ方だけの島: JS無効でも初期表示の1枚が見える。隠れたパネルの入力値がPOSTされ、Formが捨てる
 - 確認dialogでEscapeとfocus移動が効く。ネイティブの `confirm()` が呼ばれない
@@ -107,7 +108,7 @@ import 'application-ui-kit/islands/auto-mount'
 | 症状 | 確認すること |
 |---|---|
 | ボタンを押しても何も起きない | 発火しているevent名にlistenerがあるか（`confirm-modal` なら `confirm-host` が置かれているか）。`getRegisteredIslandComponents()` に該当Islandがあるか |
-| POSTが403 | `CSRF_COOKIE_NAME` と `data-csrf-cookie-name` / `hx-headers` の値が一致しているか。cookie名をJSに直書きしていないか |
+| POSTが403 | `CSRF_COOKIE_NAME` と `data-csrf-cookie-name` / `hx-headers` の値が一致しているか。cookie名をJSに直書きしていないか。`CSRF_USE_SESSIONS` / `CSRF_COOKIE_HTTPONLY` が有効なら cookie は読めない（手順5の前提） |
 | toastが出ないがerrorも出ない | `toast-listener` がbase.htmlにあるか。`window.<独自名>` を参照しているなら `data-global-aliases` に登録したか。`?.` で存在確認して握り潰していないか |
 | htmxで差し替えた領域のIslandだけ動かない | htmxがentryより前に読み込まれているか（auto-mountは読み込み時に `window.htmx` を見る） |
 | Islandが二重に描かれる / `createRoot` の警告 | 同じ要素へ手動mountとauto-mountを両方かけていないか |
@@ -115,7 +116,7 @@ import 'application-ui-kit/islands/auto-mount'
 | 確認dialogが2回出る / 削除が2回飛ぶ | 自前の `htmx:confirm` listenerが残っていないか。`confirm-host` を2つ置いていないか（2つ目は警告を出して何もしない） |
 | template用classを入れたのに見た目が変わらない | 自前の同名classを削除したか。`styles.css` の読み込みが自前CSSより前になっていないか |
 | `data-props` がparseできない | `\|safe` を付けていないか。属性の引用符とJSONの引用符が衝突していないか |
-| Islandが文字列のpropsを数値として受け取る | 文字列で保ちたい値を個別 `data-*` に置いていないか（`data-props` 側へ移す） |
+| Islandが文字列のpropsを数値として受け取る / IDの末尾が変わる | 文字列で保ちたい値を個別 `data-*` に置いていないか（`data-props` 側へ移す）。`data-props` 側でもPython側で `str()` にしているか（`json.dumps` は整数を数値のまま出す） |
 
 ## 扱わないもの
 
