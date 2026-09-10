@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/hamirilo/ai-dev-playbook/compare/v1.2.1...v1.2.2) (2026-09-10)
+
+
+### Bug Fixes
+
+* 最小Workflowの掲載YAMLをrelease-please-action v5へ合わせる ([#17](https://github.com/hamirilo/ai-dev-playbook/issues/17)) ([c3a11c2](https://github.com/hamirilo/ai-dev-playbook/commit/c3a11c285f7b74d481c55ddcf529931b6f4ace2c))
+
 ## [1.2.1](https://github.com/hamirilo/ai-dev-playbook/compare/v1.2.0...v1.2.1) (2026-09-10)
 
 
