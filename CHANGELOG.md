@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/hamirilo/ai-dev-playbook/compare/v1.2.0...v1.2.1) (2026-09-10)
+
+
+### Bug Fixes
+
+* **ci:** forkでRelease Pleaseを実行せず、release手順へfork運用とAPI障害時の対応を追加する ([#14](https://github.com/hamirilo/ai-dev-playbook/issues/14)) ([62715b0](https://github.com/hamirilo/ai-dev-playbook/commit/62715b071b2c378e26b3757bd95f54e56f5ac37d))
+
 ## [1.2.0](https://github.com/hamirilo/ai-dev-playbook/compare/v1.1.0...v1.2.0) (2026-09-04)
 
 
