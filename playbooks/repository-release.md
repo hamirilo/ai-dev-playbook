@@ -135,12 +135,12 @@ Something went wrong while executing your query ... Please include <id> when rep
 
 時間を置いてから、失敗したWorkflowの`Re-run all jobs`を実行します。2026-09-09に`ai-dev-platform`で2回連続して発生し、約10時間後の再実行で成功しました。
 
-再実行しても再現する場合は、最終手段として手動でreleaseします。
+再実行しても再現する場合は、最終手段として手動でreleaseします。着手前に、Release Pleaseが作成したrelease PRとbranch（`release-please--branches--main`）が残っていないかを確認します。残っている場合は手動releaseと競合するため、release PRをcloseしbranchを削除してから進めます。
 
 1. `version.txt`と`CHANGELOG.md`を次のversionへ更新するPRを作り、`chore(main): release <version>`としてmergeする。
 2. merge後のcommitへ`v<version>`のtagを作成しpushする。
 3. 同じtagでGitHub Releaseを作成し、Release notesへ`CHANGELOG.md`の該当分を記載する。
-4. 次回のRelease Pleaseがlatest tagを基準に再開できることを確認する。
+4. 次回のRelease Pleaseが手動作成したlatest tagを基準に、期待どおりの次versionのrelease PRを作ることを確認する。古いstateが再利用されていないことを、release PRのversionと差分で確認する。
 
 ### versionが意図と異なる
 
