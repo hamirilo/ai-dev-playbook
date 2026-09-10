@@ -54,12 +54,14 @@ jobs:
     if: github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         with:
           release-type: simple
 ```
 
 `if`により、forkではWorkflowが起動しても`release` jobがskipされ、fork独自のversionやrelease PRが作られません。
+
+actionのmajor versionはNode.jsのruntimeに追随します。`@v4`はnode20を宣言しており、GitHubがnode20を廃止する過程で非推奨の警告が出ます。`@v5`はnode24です。
 
 自動化を揃えることだけを目的に共通Workflow repositoryや追加設定を増やしません。複数packageや独自tagが必要なrepositoryは個別に設計します。
 
