@@ -13,6 +13,8 @@ permissions:
 
 jobs:
   release:
+    # forkでは実行しない。forkはupstreamのtagを同期するだけで独自のversionを切らない（docs/release.md）
+    if: github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
