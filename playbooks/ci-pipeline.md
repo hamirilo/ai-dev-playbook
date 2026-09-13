@@ -21,26 +21,75 @@ releaseのWorkflowは[リポジトリのリリース](repository-release.md)を�
 
 ## 起動条件
 
-`paths`と`paths-ignore`はどちらも**Workflow自体を起動するかどうか**を決めます。job内の分岐ではありません。ここの選択がbranch protectionと噛み合わないと、後から直しにくい失敗になります。
+GitHub ActionsにはCIを走らせない方法が2つあり、branch protection / rulesetのrequired checkとの相性が正反対です。
 
-| 方式 | branch protectionの必須checkにできるか |
-|---|---|
-| `paths` / `paths-ignore` | **できない。** 起動しないeventではcheckが永久にpendingのままになり、PRがmergeできなくなる |
-| 変更検出jobと`if:` | できる。skipされたjobは成功として扱われる |
+| | Workflow levelのskip（`on.paths` / `on.paths-ignore`） | job levelの`if:` |
+|---|---|---|
+| 起きること | Workflow自体が起動しない | Workflowは起動し、条件に合わないjobだけがskipされる |
+| checkの報告 | **1つも報告されない** | `skipped`として報告される |
+| required checkにした場合 | 対象外のPRでcheckが永久にpendingになり、mergeできない | skipは成功として扱われ、mergeできる |
 
-必須checkにしない段階では`paths`で足ります。ただし対象を絞りすぎないでください。`paths`をApplication codeだけにすると、documentやtask runnerの定義だけを変更したPRが**CIを一度も実行しないままmerge**されます。Workflow自身とroot設定を対象へ含めます。
+required checkを使わない段階では`on.paths`で足ります。**required checkを導入する時点で、`on.paths`は変更検出jobと`if:`へ置き換えます**（[規模が大きい場合](#規模が大きい場合)）。起動条件を絞ったまま必須化すると、対象外のPRが永久にmergeできなくなります。
+
+### どのcheckをrequiredにするか
+
+required checkはcheckの**名前**で指定し、その名前のcheckが報告されないPRはpendingのままになります。
+
+- skipされうるjobも含めて列挙します。skipは成功として扱われるため、変更検出で落としたjobがPRを止めることはありません。
+- matrixを使うと、matrixの値がcheck名に含まれます。shardを増減させるたびにruleset側の登録を直すことになります。
+
+job構成を変えるたびにruleset側を触りたくない場合は、**集約jobを1つだけrequiredにします**。
+
+```yaml
+  ci:
+    # 先行jobがskip・失敗のどちらでも、このjobは必ず結果を報告する
+    if: always()
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 先行jobの結果を判定する
+        env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
+        run: |
+          echo "$RESULTS"
+          case "$RESULTS" in
+            *failure*|*cancelled*) exit 1 ;;
+          esac
+```
+
+`if: always()`が無いと、先行jobがskipされたときに集約job自体もskipされ、判定が行われません。この形ならrulesetへ登録するcheckは`ci`の1つで済みます。
+
+### 起動対象の選び方
+
+`on.paths`を使う場合、Application directoryだけを列挙しません。**CIの結果を変え得るfileを種類で洗い出します。**
+
+- Application code
+- 依存のmanifestとlock file
+- 配布物の作られ方を決めるfile（container定義、build設定）
+- runtimeの版を固定するfile
+- CIが実行するcommandの定義（task runner）
+- そのWorkflow自身
+
+pathはrepository構成によって変わります。次は列挙の粒度の例であり、そのまま写す対象ではありません。
 
 ```yaml
 on:
-  push:
-    paths: ["backend/**", ".github/workflows/backend-ci.yml", "justfile"]
   pull_request:
-    paths: ["backend/**", ".github/workflows/backend-ci.yml", "justfile"]
+    paths:
+      - "backend/**"                        # Application code
+      - "pyproject.toml"                    # 依存のmanifest（rootに置く構成の場合）
+      - "uv.lock"                           # 依存のlock file
+      - "Dockerfile"                        # 配布物の作られ方
+      - ".python-version"                   # runtimeの版
+      - "justfile"                          # CIが実行するcommandの定義
+      - ".github/workflows/backend-ci.yml"  # このWorkflow自身
 ```
 
-`paths`はdirectory名をsourceへ固定します。directoryを移動・廃止するときは、同じPRでここも直します。廃止したdirectoryを指したままのfilterは**errorにならず、単に一度も起動しません**。
+判断に迷うfileは含めます。不要なrunが増える害は、検査されないままmergeされる害より小さいためです。
 
-`paths`と`paths-ignore`の一覧は`push`と`pull_request`の両方へ同じものを書きます。YAMLのanchorは、置き場になる未知のtop level keyをActionsが拒否するため利用できません。
+`paths`はpathをsourceへ固定します。directoryを移動・廃止するときは、同じPRでここも直します。**廃止したpathを指したままのfilterはerrorにならず、単に一度も起動しません。**
+
+一覧は`push`と`pull_request`の両方へ同じものを書きます。YAMLのanchorは、置き場になる未知のtop level keyをActionsが拒否するため利用できません。
 
 ## 最小構成
 
@@ -49,11 +98,13 @@ on:
 ```yaml
 name: Backend CI
 
+# 依存のmanifestとlock fileはbackend/の下にある構成を前提にしている。
+# rootに置く構成なら、それらも個別に列挙する（「起動対象の選び方」）。
 on:
   push:
-    paths: ["backend/**", ".github/workflows/backend-ci.yml", "justfile"]
+    paths: ["backend/**", "Dockerfile", "justfile", ".github/workflows/backend-ci.yml"]
   pull_request:
-    paths: ["backend/**", ".github/workflows/backend-ci.yml", "justfile"]
+    paths: ["backend/**", "Dockerfile", "justfile", ".github/workflows/backend-ci.yml"]
 
 defaults:
   run:
@@ -123,9 +174,9 @@ name: UI CI
 
 on:
   push:
-    paths: ["frontend/**", ".github/workflows/ui-ci.yml"]
+    paths: ["frontend/**", ".bun-version", ".github/workflows/ui-ci.yml"]
   pull_request:
-    paths: ["frontend/**", ".github/workflows/ui-ci.yml"]
+    paths: ["frontend/**", ".bun-version", ".github/workflows/ui-ci.yml"]
 
 permissions:
   contents: read
@@ -140,9 +191,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # 版はrepositoryが持ち、CIはそれを参照する（後述「版を固定する」）
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: .bun-version
 
       # lock fileのとおりに入れる。lockとmanifestがずれていたら失敗させる。
       - run: bun install --frozen-lockfile
@@ -157,6 +209,26 @@ jobs:
 private registryのtokenを渡すenvへ`GITHUB_TOKEN`という名前を使いません。GitHub CLIの予約名であり、`read:packages`しか持たない値を入れると、同じ環境で動くCLIの他の操作が権限不足で失敗します。値そのものはActionsが発行する`secrets.GITHUB_TOKEN`で足ります。
 
 test runnerは`bun test`ではなく`bun run test`で起動します。前者はbun内蔵のrunnerが動き、manifestの`test` scriptを無視します。
+
+### 版を固定する
+
+同じcommitを再実行したときに同じ結果が出ることを、CIの前提にします。次のいずれかが`latest`追随になっていると、sourceを変えていないのにある日CIが落ちます。
+
+| 対象 | 固定の仕方 |
+|---|---|
+| 依存package | lock fileと、固定installのoption（`--frozen-lockfile`、`uv sync --frozen`） |
+| language runtime | repositoryのfile（`.bun-version`、`.python-version`、`.tool-versions`）を版の正本にし、CIはそれを参照する |
+| action | major versionにpinする。release手順等、挙動が版に依存するものはexact versionでpinする |
+
+runtimeの版はWorkflowへ直接書かず、repository側のfileを参照します。Workflowへ書くと、開発者の手元とCIで別々の版が動き、どちらが正なのか決まりません。
+
+```yaml
+- uses: oven-sh/setup-bun@v2
+  with:
+    bun-version-file: .bun-version   # package.json / .tool-versions も指定できる
+```
+
+`runs-on: ubuntu-latest`も同じ性質を持ちますが、固定するとimageのsecurity updateが止まります。ここは追随させ、runner image起因の失敗はGitHubのrelease notesで確認します。
 
 ## 通す検証
 
@@ -249,9 +321,12 @@ concurrency:
 
 | 症状 | 確認すること |
 |---|---|
-| 変更したのにCIが走らない | `paths`が現在のdirectory構成と一致しているか。廃止したpathを指したfilterはerrorにならず起動しないだけ |
-| 必須checkが永久にpendingでmergeできない | `paths` / `paths-ignore`で起動を絞っていないか。必須checkにするなら変更検出jobと`if:`へ変える |
+| 変更したのにCIが走らない | `paths`が現在の構成と一致しているか。廃止したpathを指したfilterはerrorにならず起動しないだけ |
+| 設定fileだけ変えたPRが検査されずに通る | `paths`がApplication directoryだけになっていないか。lock file、container定義、task runnerの定義を含める |
+| required checkが永久にpendingでmergeできない | `on.paths` / `on.paths-ignore`で起動を絞っていないか。required checkにするなら変更検出jobと`if:`へ変える |
+| job構成を変えるたびにmergeできなくなる | required checkをjob名で個別に登録していないか。集約jobを1つだけrequiredにする |
 | 変更検出jobが "Resource not accessible by integration" | そのjobへ`pull-requests: read`を付けているか |
+| sourceを変えていないのにある日CIが落ちる | runtime・actionの版が`latest`追随になっていないか |
 | localでは通るがCIだけ落ちる | DB engine、timezone、実行時刻に依存していないか。日付境界の不具合は特定時間帯のrunだけ再現する |
 | CIは緑なのに配布物が壊れている | image buildと、image内の成果物の存在確認がCIに含まれているか |
 | lock fileを更新し忘れたPRが通る | installへ`--frozen-lockfile`相当を付けているか |
@@ -261,10 +336,12 @@ concurrency:
 
 ## 検証
 
-- 対象directoryを変更したPRでWorkflowが起動する
+- 対象pathを変更したPRでWorkflowが起動し、lock fileやtask runnerの定義だけを変えたPRでも起動する
 - documentだけのPRでも、必須checkにしている場合はcheckが完了する
 - lock fileとmanifestを意図的にずらすとinstallが失敗する
 - modelを変更してmigrationを作らないと`makemigrations --check`が失敗する
+- required checkにしたcheckが、対象外の変更だけのPRでも報告される（pendingで止まらない）
+- runtimeの版をrepositoryのfileで変更すると、CIで動く版も変わる
 - image内の成果物確認を意図的に壊すとjobが失敗する
 
 ## 関連
