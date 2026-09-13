@@ -138,9 +138,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # uv本体の版はbackend/pyproject.tomlの[tool.uv] required-versionが正本
+      # （actionのpinはactionの版であり、uvの版ではない）
       - name: Install uv
         uses: astral-sh/setup-uv@v10.0.1
         with:
+          version-file: backend/pyproject.toml
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
       - run: uv sync --frozen
@@ -215,23 +218,34 @@ test runnerは`bun test`ではなく`bun run test`で起動します。前者は
 
 ### 版を固定する
 
-同じcommitを再実行したときに同じ結果が出ることを、CIの前提にします。次のいずれかが`latest`追随になっていると、sourceを変えていないのにある日CIが落ちます。
+このPlaybookが求めるのは、bit単位で同一の実行環境ではなく、**意図しない更新でCIの結果が変わらないこと**です。同じcommitを再実行して結果が変わる原因のうち、自分たちで選べるものを固定します。
 
 | 対象 | 固定の仕方 |
 |---|---|
 | 依存package | lock fileと、固定installのoption（`--frozen-lockfile`、`uv sync --frozen`） |
-| language runtime | repositoryのfile（`.bun-version`、`.python-version`、`.tool-versions`）を版の正本にし、CIはそれを参照する |
-| action | major versionにpinする。release手順等、挙動が版に依存するものはexact versionでpinする |
+| language runtime、package manager本体 | repositoryのfileを版の正本にし、CIはそれを参照する |
+| action | major versionにpinする。挙動が版に依存するものはexact versionでpinする |
+| container image、runner image | tagで指定する。securityの更新は受け取る |
 
-runtimeの版はWorkflowへ直接書かず、repository側のfileを参照します。Workflowへ書くと、開発者の手元とCIで別々の版が動き、どちらが正なのか決まりません。
+**actionをpinしても、そのactionが導入するtoolの版は固定されません。** `astral-sh/setup-uv@v10.0.1`はactionの版であり、入るuvの版ではありません。同じくbunもnodeも、setup系のactionは既定で最新を入れます。
+
+toolの版はWorkflowへ直接書かず、repository側のfileを正本にしてCIから参照します。Workflowへ書くと、開発者の手元とCIで別々の版が動き、どちらが正なのか決まりません。
 
 ```yaml
 - uses: oven-sh/setup-bun@v2
   with:
-    bun-version-file: .bun-version   # package.json / .tool-versions も指定できる
+    bun-version-file: .bun-version        # package.json / .tool-versions も指定できる
+
+- uses: astral-sh/setup-uv@v10.0.1
+  with:
+    version-file: backend/pyproject.toml  # [tool.uv] required-version を読む
 ```
 
-`runs-on: ubuntu-latest`も同じ性質を持ちますが、固定するとimageのsecurity updateが止まります。ここは追随させ、runner image起因の失敗はGitHubのrelease notesで確認します。
+`defaults.run.working-directory`はactionのinputには効きません。manifestがrepository rootに無い構成では、pathを明示しないとrootを探して見つけられません。
+
+正本にできるfileがrepositoryへ無い場合は、暫定としてWorkflowへexact versionを書きます（`version: "0.9.2"`）。この場合、手元の版とずれてもCIは気づきません。project側へ`required-version`を置くところまで進めます。
+
+container imageとrunner imageはtagのままにします。`postgres:16-alpine`や`runs-on: ubuntu-latest`をdigestで固定すると、securityの更新を明示的に取り込むまで受け取れなくなります。CIの実行環境そのものを証拠として残す必要がある場合（監査・規制対応）にだけdigest固定を検討します。
 
 ## 通す検証
 
@@ -330,7 +344,8 @@ concurrency:
 | job構成を変えるたびにmergeできなくなる | required checkをjob名で個別に登録していないか。集約jobを1つだけrequiredにする |
 | 途中のjobが失敗したのにrequired checkが緑 | 集約jobの`needs`にすべてのjobを列挙しているか。省いたjobの失敗は後続の`skipped`として伝播し、成功扱いになる |
 | 変更検出jobが "Resource not accessible by integration" | そのjobへ`pull-requests: read`を付けているか |
-| sourceを変えていないのにある日CIが落ちる | runtime・actionの版が`latest`追随になっていないか |
+| sourceを変えていないのにある日CIが落ちる | runtime・toolの版が`latest`追随になっていないか。actionのpinはactionの版であり、そのactionが入れるtoolの版ではない |
+| 手元とCIでtoolの挙動が違う | 版の正本がrepository側のfileにあり、CIがそれを参照しているか。Workflowへ直接書くと二重管理になる |
 | localでは通るがCIだけ落ちる | DB engine、timezone、実行時刻に依存していないか。日付境界の不具合は特定時間帯のrunだけ再現する |
 | CIは緑なのに配布物が壊れている | image buildと、image内の成果物の存在確認がCIに含まれているか |
 | lock fileを更新し忘れたPRが通る | installへ`--frozen-lockfile`相当を付けているか |
@@ -346,7 +361,7 @@ concurrency:
 - modelを変更してmigrationを作らないと`makemigrations --check`が失敗する
 - required checkにしたcheckが、対象外の変更だけのPRでも報告される（pendingで止まらない）
 - 変更検出jobをわざと失敗させると、集約jobも失敗する（skipとして握り潰されない）
-- runtimeの版をrepositoryのfileで変更すると、CIで動く版も変わる
+- runtime・toolの版をrepositoryのfileで変更すると、CIで動く版も変わる（CIのlogに出る版で確認する）
 - image内の成果物確認を意図的に壊すとjobが失敗する
 
 ## 関連
