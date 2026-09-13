@@ -33,6 +33,7 @@ StandardとPlaybookが矛盾する場合はStandardを優先します。Project�
 | APIを追加・変更 | [API実装](playbooks/api-implementation.md) |
 | CIをPR・マージの必須gateとして組む | [CIパイプライン](playbooks/ci-pipeline.md) |
 | container化・image配布・既存環境の移行 | [コンテナ配布](playbooks/container-delivery.md) |
+| Git管理外の設定・secret・本番環境との差分を確認 | [デプロイ設定の確認](playbooks/deployment-configuration.md) |
 | Docker Composeのhost port公開を整理 | [Docker Compose ポート公開](playbooks/docker-compose-port-exposure.md) |
 | 共有repositoryをversioning・release | [リポジトリのリリース](playbooks/repository-release.md) |
 
