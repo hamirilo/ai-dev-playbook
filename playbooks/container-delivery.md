@@ -75,12 +75,38 @@ mainまたはリリース時には、同じ手順で作成したイメージを�
 
 ここではレジストリをGitHub Container Registry（`ghcr.io`）とし、ステージング・本番がそこから同じイメージをpullする前提で書きます。他のレジストリを使う場合は、同じ観点をプロジェクト側で置き換えます。
 
+### サーバ側に用意するもの
+
+pullして起動するだけの環境に必要なものは次のとおりです。ビルドに要るtoolは入れません。
+
+- Docker Engineとcompose plugin。言語runtime、package manager、ビルド用toolは不要。
+- デプロイを実行するユーザーと、そのユーザーがdockerを使える権限。
+- そのユーザーから読めるregistryの資格情報（`~/.docker/config.json`、または`DOCKER_CONFIG`で指定した場所）。
+- `ghcr.io`と`pkg-containers.githubusercontent.com`への443到達。
+- 起動するイメージの参照（tagではなくdigest）を持つファイル。デプロイのたびにここを書き換える。
+- 実行時にだけ必要な環境変数・secret。ビルド時にだけ必要な値とは分けて置く。
+- イメージを置くディスクの余裕と、古いイメージを整理する手順。ディスク不足はpullの失敗として現れる。
+- 正しい時刻（NTP）。ずれると証明書やトークンの検証で落ちる。
+
+### 使うトークンの種類
+
+本番サーバからpullするときに使えるものと、使えないものを分けます。
+
+| 種類 | サーバからのpullに使えるか | 必要な権限 | 期限と注意 |
+|---|---|---|---|
+| personal access token (classic) | 使える。Container registryの認証として案内されている方式 | `read:packages`だけ。`repo`や`write:packages`を足さない | 期限を設定し、更新手順と担当を決める。SSOのorganizationではauthorizeが必要 |
+| fine-grained personal access token | 対応状況が変わるため、使う前に本番と同じ経路でpullできるか確認する | organization permissionsの`Packages: Read-only` | 期限が必須。更新の運用が要る |
+| GitHub Appのinstallation token | 使えるが、短時間で失効するため取得の仕組みが要る | Appの`Packages: Read-only`と、対象organizationへのinstall | 都度取得する前提。取得処理自体の資格情報（App IDと秘密鍵）の管理が増える |
+| Actionsの`GITHUB_TOKEN` | Actionsのjob内だけ。サーバへ持ち出さない | workflowの`permissions:`で`packages: read` | jobの終了で失効する。値をサーバのfileへ保存しない |
+| deploy key・SSHの鍵 | 使えない | — | registryの認証はHTTPSで、SSHの鍵を受け付けない。gitのcloneの認証と混同しやすい |
+
+迷う場合は、pull専用のアカウントにclassic PATを`read:packages`だけで作り、それをサーバへ置きます。期限と更新担当を決めたうえで、[packageの可視性とrepositoryリンク](#packageの可視性とrepositoryリンク)の読取権限を確認します。
+
 ### pull用の資格情報
 
 - 実行環境へ置くのはpull専用の資格情報とし、CIのsecretやpushできるトークンを使い回さない。
-- classic PATを使う場合、権限は`read:packages`だけにする。
-- fine-grained PATやGitHub Appのinstallation tokenを使う場合は、対象のpackageを実際にpullできるところまで先に確認する。registryによって対応状況が異なる。
 - `docker login ghcr.io -u <user> --password-stdin` の形で渡す。トークンをコマンド引数へ書かない。履歴とプロセス一覧に残る。
+- `-u`にはトークンを発行したGitHubアカウント名を入れる。権限はトークン側で決まるため、ここを変えても足りない権限は補えない。
 - ログイン結果は`~/.docker/config.json`へbase64で入るだけで、暗号化されない。デプロイ用ユーザーの領域に置き、読取権限を確認する。
 - トークンには期限がある。期限と更新手順を決めて、切れる前に更新する。期限切れは次のデプロイまで気づけない。
 
@@ -148,6 +174,8 @@ CI等から遠隔でデプロイする場合は、デプロイのたびにlogin�
 | SSHで入れば通るが、`ssh server "..."`の非対話実行だと認証で落ちる | profileが読まれず環境変数が変わっていないか。実際に使う経路で確認する。 |
 | `error getting credentials`で止まる | `config.json`の`credsStore`がGUI前提のhelperを指していないか。SSH越しでは開けない。 |
 | `sudo`を付けたときだけpullできない | `sudo`で`HOME`が変わり、別の`config.json`を読んでいないか。 |
+| gitのcloneはできるのにpullできない | SSHの鍵とregistryの認証は別。tokenで`docker login`しているか。 |
+| 途中まで進んでpullが失敗する | ディスクが埋まっていないか。古いイメージを整理する手順があるか。 |
 
 ## リリース前の確認
 
