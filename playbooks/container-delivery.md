@@ -97,9 +97,20 @@ mainまたはリリース時には、同じ手順で作成したイメージを�
 - 実行環境から`ghcr.io`へ到達できることを確認する。GHCRはmanifestとlayerで参照先が分かれるため、`pkg-containers.githubusercontent.com`への到達も必要になる。proxyやfirewallで絞っている環境では両方を許可する。
 - イメージ名は小文字だけを使う。organization名やrepository名に大文字が入る場合、そのままの綴りではpullできない。
 
-### 実行ユーザー
+### 実行ユーザーとSSHでの作業
 
-`docker compose pull`等は、実行ユーザーのDocker設定を読みます。手元のユーザーで`docker login`し、systemdやsudoで別ユーザーとして起動すると、認証していない状態でpullが走ります。デプロイを実行するユーザーでloginしてください。
+`docker compose pull`等は、実行ユーザーのDocker設定を読みます。認証は「サーバに対して」ではなく「ユーザーのhome配下の設定に対して」残るため、誰がどのhomeで実行するかで結果が変わります。
+
+- SSHでログインした自分のユーザーで`docker login`し、systemdやsudoで別ユーザーとして起動すると、認証していない状態でpullが走る。デプロイを実行するユーザーでloginする。
+- `sudo docker ...`は`HOME`が`root`側へ変わる構成が多く、`~/.docker/config.json`を読む先も変わる。`sudo`を挟むなら、`sudo`を挟んだ状態でloginする。
+- rootless Dockerとsystem daemonが混在する環境では、`DOCKER_HOST`の指す先によって読む設定が変わる。どちらへ繋いでいるかを確認する。
+- homeが揮発する構成（都度作り直すサーバ、共有アカウント）では、`docker login`の結果を前提にしない。`DOCKER_CONFIG`で置き場所を明示するか、デプロイ手順の中でloginする。
+
+`ssh server "docker compose pull"`のように非対話で実行する場合は、対話ログインとは環境が変わります。
+
+- 非対話shellでは`.bashrc`等のprofileが読まれず、`PATH`や環境変数が対話時と違う。トークンを環境変数から渡している手順は、この差で静かに失敗する。
+- `~/.docker/config.json`の`credsStore`がGUI前提のcredential helper（鍵束、`pass`等）を指していると、SSH越しでは鍵束を開けず`error getting credentials`で落ちる。デプロイ用ユーザーではhelperを使わないか、非対話で開ける方式にする。
+- 認証の確認は、実際にデプロイで使う経路（同じユーザー、同じ非対話コマンド）で行う。対話ログインで`docker pull`が通ることは、非対話で通る根拠にならない。
 
 CI等から遠隔でデプロイする場合は、デプロイのたびにloginして終了時に`docker logout`するか、資格情報の置き場所と保持期間をプロジェクト側で明示します。
 
@@ -110,6 +121,7 @@ CI等から遠隔でデプロイする場合は、デプロイのたびにlogin�
 - 実行環境がイメージレジストリへ到達できる
 - pull用の最小権限の資格情報を実行環境へ安全に渡せる
 - pull用トークンの期限と更新手順が決まっている
+- デプロイで実際に使うユーザーと実行方法（sudo、systemd、非対話SSH）でpullを確認できる
 - pullするpackageへ読取権限が付いている（SSOが必要な組織ではauthorize済み）
 - 実行環境のOS・CPUアーキテクチャが分かっている
 - CIがprivate packageを取得できる
@@ -133,6 +145,9 @@ CI等から遠隔でデプロイする場合は、デプロイのたびにlogin�
 | 認証は通るが`manifest unknown`になる | 認証ではなくタグ・digestの指定の問題。CIがpushした綴りと一致しているか。 |
 | `docker login`は成功するのに起動時のpullが失敗する | 起動する側のユーザーが違っていないか（systemd、sudo、遠隔デプロイ）。 |
 | pullがtimeoutやTLSで失敗する | `ghcr.io`だけでなく`pkg-containers.githubusercontent.com`へ到達できるか。 |
+| SSHで入れば通るが、`ssh server "..."`の非対話実行だと認証で落ちる | profileが読まれず環境変数が変わっていないか。実際に使う経路で確認する。 |
+| `error getting credentials`で止まる | `config.json`の`credsStore`がGUI前提のhelperを指していないか。SSH越しでは開けない。 |
+| `sudo`を付けたときだけpullできない | `sudo`で`HOME`が変わり、別の`config.json`を読んでいないか。 |
 
 ## リリース前の確認
 
