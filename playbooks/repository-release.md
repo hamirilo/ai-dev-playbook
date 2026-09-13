@@ -7,6 +7,7 @@
 - `ai-dev-standards`、`ai-dev-playbook`、`ai-dev-platform`へRelease Pleaseを導入する
 - release PRを確認して正式versionを公開する
 - Release PleaseのWorkflowが失敗した原因を確認する
+- PR titleの形式をversion判定の前提として検査する
 - Standards / PlaybookのreleaseをPlatformへ取り込む
 - forkでupstreamのrelease tagを同期する
 
@@ -75,6 +76,43 @@ actionのmajor versionはNode.jsのruntimeに追随します。`@v4`はnode20を
 | `docs:` / `chore:` | 原則releaseなし | release対象外の内部整理 |
 
 文書repositoryでも、利用者に影響する追加は`feat:`、訂正は`fix:`として扱います。
+
+## PRタイトルの検査
+
+squash mergeでは、PR titleがそのまま`main`のcommit messageになり、Release Pleaseはそれだけを見て次のversionを決めます。prefixの無いPRはWorkflowを失敗させず、**「releaseされない変更」として静かにmergeされます**。`CHANGELOG.md`にもGitHub Releaseにも現れず、merge後は履歴の書き換えでしか直せません。
+
+Release Pleaseを導入するrepositoryでは、PR titleの形式をPRの時点で検査します。
+
+```yaml
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # titleはenv経由で渡す。runの中へ${{ }}を直接展開すると、PR titleへ
+      # 書かれた文字列がそのままrunnerのshellで実行される。
+      - name: Conventional Commitsの形式か
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -u
+          pattern='^(feat|fix|docs|chore|refactor|perf|test|build|ci|style|revert)(\([a-zA-Z0-9,./ _-]+\))?!?: .+'
+          printf '%s' "$TITLE" | grep -Eq "$pattern" && exit 0
+          echo "PR titleがConventional Commitsの形式ではありません: $TITLE" >&2
+          exit 1
+```
+
+失敗したときに、期待する形式と各prefixがどのversionに対応するかをmessageへ出します。titleを直せばこのcheckは自動で再実行されます。
+
+第三者のactionを追加せず、shell 1本で足ります。「自動化を揃えること」を目的にした追加ではなく、**Release Pleaseのversion判定が成立するための前提**であるため、最小Workflowへの追加として扱います。
 
 ## Release手順
 
@@ -167,5 +205,6 @@ Something went wrong while executing your query ... Please include <id> when rep
 - release PRのversionがSemVer判断と一致する
 - `CHANGELOG.md`に対象変更が含まれる
 - release PR merge後にtagとGitHub Releaseが作成される
+- prefixの無いPR titleでPR Titleのcheckが失敗する
 - forkでWorkflowを実行すると`release` jobがskipされる
 - Platformではsubmodule pointerがrelease tagのcommitと一致する

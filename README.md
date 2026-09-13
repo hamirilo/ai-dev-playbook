@@ -31,6 +31,7 @@ StandardとPlaybookが矛盾する場合はStandardを優先します。Project�
 | 品質・性能・accessibility確認 | [品質確認](playbooks/quality-checks.md) |
 | 認証・認可・error・外部通信 | [安全な実装とエラー処理](playbooks/security-and-error-handling.md) |
 | APIを追加・変更 | [API実装](playbooks/api-implementation.md) |
+| CIをPR・マージの必須gateとして組む | [CIパイプライン](playbooks/ci-pipeline.md) |
 | container化・image配布・既存環境の移行 | [コンテナ配布](playbooks/container-delivery.md) |
 | Docker Composeのhost port公開を整理 | [Docker Compose ポート公開](playbooks/docker-compose-port-exposure.md) |
 | 共有repositoryをversioning・release | [リポジトリのリリース](playbooks/repository-release.md) |
