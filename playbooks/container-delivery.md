@@ -82,7 +82,7 @@ pullして起動するだけの環境に必要なものは次のとおりです�
 - Docker Engineとcompose plugin。言語runtime、package manager、ビルド用toolは不要。
 - デプロイを実行するユーザーと、そのユーザーがdockerを使える権限。
 - そのユーザーから読めるregistryの資格情報（`~/.docker/config.json`、または`DOCKER_CONFIG`で指定した場所）。
-- `ghcr.io`と`pkg-containers.githubusercontent.com`への443到達。
+- `ghcr.io`への443到達。通信先を限定している環境では、後述のとおりlayerの取得先も許可する。
 - 起動するイメージの参照（tagではなくdigest）を持つファイル。デプロイのたびにここを書き換える。
 - 実行時にだけ必要な環境変数・secret。ビルド時にだけ必要な値とは分けて置く。
 - イメージを置くディスクの余裕と、古いイメージを整理する手順。ディスク不足はpullの失敗として現れる。
@@ -90,17 +90,17 @@ pullして起動するだけの環境に必要なものは次のとおりです�
 
 ### 使うトークンの種類
 
-本番サーバからpullするときに使えるものと、使えないものを分けます。
+サーバからGHCRへpullするときの標準は、**personal access token (classic) に`read:packages`だけを付けたもの**です。pull専用のアカウントで作り、そのトークンをサーバへ置きます。期限と更新担当を決めたうえで、[packageの可視性とrepositoryリンク](#packageの可視性とrepositoryリンク)の読取権限を確認します。
 
-| 種類 | サーバからのpullに使えるか | 必要な権限 | 期限と注意 |
+| 種類 | サーバからのpull | 必要な権限 | 期限と注意 |
 |---|---|---|---|
-| personal access token (classic) | 使える。Container registryの認証として案内されている方式 | `read:packages`だけ。`repo`や`write:packages`を足さない | 期限を設定し、更新手順と担当を決める。SSOのorganizationではauthorizeが必要 |
-| fine-grained personal access token | 対応状況が変わるため、使う前に本番と同じ経路でpullできるか確認する | organization permissionsの`Packages: Read-only` | 期限が必須。更新の運用が要る |
-| GitHub Appのinstallation token | 使えるが、短時間で失効するため取得の仕組みが要る | Appの`Packages: Read-only`と、対象organizationへのinstall | 都度取得する前提。取得処理自体の資格情報（App IDと秘密鍵）の管理が増える |
+| personal access token (classic) | 標準手順。これを使う | `read:packages`だけ。`repo`や`write:packages`を足さない | 期限を設定し、更新手順と担当を決める。SSOのorganizationではauthorizeが必要 |
+| fine-grained personal access token | Docker registryの認証の標準手順としては扱わない | — | GitHub APIやpackageの管理で使えることと、`docker login`で使えることは別 |
+| GitHub Appのinstallation token | Docker registryの認証の標準手順としては扱わない | — | 短時間で失効するため、採るなら取得と更新の仕組みごと設計する |
 | Actionsの`GITHUB_TOKEN` | Actionsのjob内だけ。サーバへ持ち出さない | workflowの`permissions:`で`packages: read` | jobの終了で失効する。値をサーバのfileへ保存しない |
 | deploy key・SSHの鍵 | 使えない | — | registryの認証はHTTPSで、SSHの鍵を受け付けない。gitのcloneの認証と混同しやすい |
 
-迷う場合は、pull専用のアカウントにclassic PATを`read:packages`だけで作り、それをサーバへ置きます。期限と更新担当を決めたうえで、[packageの可視性とrepositoryリンク](#packageの可視性とrepositoryリンク)の読取権限を確認します。
+classic PAT以外の方式を採る場合は、そのregistryで`docker login`から実際にpullできるところまでを先に確認し、選んだ理由と確認結果をプロジェクトのADRへ残します。
 
 ### pull用の資格情報
 
@@ -120,7 +120,8 @@ pullして起動するだけの環境に必要なものは次のとおりです�
 
 ### 到達性とイメージ名
 
-- 実行環境から`ghcr.io`へ到達できることを確認する。GHCRはmanifestとlayerで参照先が分かれるため、`pkg-containers.githubusercontent.com`への到達も必要になる。proxyやfirewallで絞っている環境では両方を許可する。
+- 実行環境から`ghcr.io`へ到達できることを確認する。
+- GHCRはmanifestとlayerで取得先が分かれ、layerの配信先はGitHub側の都合で変わり得る。proxyやfirewallで通信先を限定している環境では、実際の`docker pull`が要求するホストへの443通信も許可する。許可先をホスト名で固定するより、`docker pull`で実際に要求された先を確認して合わせる。
 - イメージ名は小文字だけを使う。organization名やrepository名に大文字が入る場合、そのままの綴りではpullできない。
 
 ### 実行ユーザーとSSHでの作業
@@ -170,7 +171,7 @@ CI等から遠隔でデプロイする場合は、デプロイのたびにlogin�
 | 昨日まで通っていたデプロイが認証で失敗する | pull用トークンの期限が切れていないか。期限と更新手順を決めているか。 |
 | 認証は通るが`manifest unknown`になる | 認証ではなくタグ・digestの指定の問題。CIがpushした綴りと一致しているか。 |
 | `docker login`は成功するのに起動時のpullが失敗する | 起動する側のユーザーが違っていないか（systemd、sudo、遠隔デプロイ）。 |
-| pullがtimeoutやTLSで失敗する | `ghcr.io`だけでなく`pkg-containers.githubusercontent.com`へ到達できるか。 |
+| manifestは取れるがlayerのダウンロードで失敗する | `ghcr.io`以外にlayerの取得先があり、そこが遮断されていないか。実際の`docker pull`が要求する通信先を確認する。 |
 | SSHで入れば通るが、`ssh server "..."`の非対話実行だと認証で落ちる | profileが読まれず環境変数が変わっていないか。実際に使う経路で確認する。 |
 | `error getting credentials`で止まる | `config.json`の`credsStore`がGUI前提のhelperを指していないか。SSH越しでは開けない。 |
 | `sudo`を付けたときだけpullできない | `sudo`で`HOME`が変わり、別の`config.json`を読んでいないか。 |
