@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/hamirilo/ai-dev-playbook/compare/v1.2.2...v1.3.0) (2026-09-13)
+
+
+### Features
+
+* CIパイプラインのPlaybookを追加し、リリース手順へPRタイトル検査を加える ([#19](https://github.com/hamirilo/ai-dev-playbook/issues/19)) ([c4d144d](https://github.com/hamirilo/ai-dev-playbook/commit/c4d144dabdd1783a438cbaee638f1f77aa20aabc))
+
 ## [1.2.2](https://github.com/hamirilo/ai-dev-playbook/compare/v1.2.1...v1.2.2) (2026-09-10)
 
 
