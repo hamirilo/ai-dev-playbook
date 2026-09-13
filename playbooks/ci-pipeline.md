@@ -105,9 +105,19 @@ name: Backend CI
 # rootに置く構成なら、それらも個別に列挙する（「起動対象の選び方」）。
 on:
   push:
-    paths: ["backend/**", "Dockerfile", "justfile", ".github/workflows/backend-ci.yml"]
+    paths:
+      - "backend/**"
+      - "Dockerfile"
+      - ".python-version"
+      - "justfile"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
-    paths: ["backend/**", "Dockerfile", "justfile", ".github/workflows/backend-ci.yml"]
+    paths:
+      - "backend/**"
+      - "Dockerfile"
+      - ".python-version"
+      - "justfile"
+      - ".github/workflows/backend-ci.yml"
 
 defaults:
   run:
@@ -300,11 +310,16 @@ jobs:
         id: filter
         with:
           filters: |
+            # 起動条件の paths と同じ範囲を列挙する。片方だけ直すと、
+            # Workflowは起動したのに対象jobがskipされる状態になる。
             backend:
               - 'backend/**'
+              - 'Dockerfile'
+              - '.python-version'
+              - 'justfile'
             frontend:
               - 'frontend/**'
-              - 'backend/Dockerfile'
+              - '.bun-version'
 
   backend:
     needs: changes
