@@ -44,7 +44,8 @@ job構成を変えるたびにruleset側を触りたくない場合は、**集�
   ci:
     # 先行jobがskip・失敗のどちらでも、このjobは必ず結果を報告する
     if: always()
-    needs: [backend, frontend]
+    # 変更検出jobを含め、Workflowのすべてのjobを列挙する（後述）
+    needs: [changes, backend, frontend]
     runs-on: ubuntu-latest
     steps:
       - name: 先行jobの結果を判定する
@@ -58,6 +59,8 @@ job構成を変えるたびにruleset側を触りたくない場合は、**集�
 ```
 
 `if: always()`が無いと、先行jobがskipされたときに集約job自体もskipされ、判定が行われません。この形ならrulesetへ登録するcheckは`ci`の1つで済みます。
+
+**集約jobの`needs`には、そのWorkflowのすべてのjobを列挙します。** 中間のjobを省くと、その失敗が後続jobの`skipped`として伝播し、集約jobからは見えなくなります。例えば上の`needs`から`changes`を落とすと、変更検出jobが失敗したときに`backend` / `frontend`はskipされ、`RESULTS`が`skipped,skipped`になって**required checkが緑のままmergeできてしまいます**。
 
 ### 起動対象の選び方
 
@@ -325,6 +328,7 @@ concurrency:
 | 設定fileだけ変えたPRが検査されずに通る | `paths`がApplication directoryだけになっていないか。lock file、container定義、task runnerの定義を含める |
 | required checkが永久にpendingでmergeできない | `on.paths` / `on.paths-ignore`で起動を絞っていないか。required checkにするなら変更検出jobと`if:`へ変える |
 | job構成を変えるたびにmergeできなくなる | required checkをjob名で個別に登録していないか。集約jobを1つだけrequiredにする |
+| 途中のjobが失敗したのにrequired checkが緑 | 集約jobの`needs`にすべてのjobを列挙しているか。省いたjobの失敗は後続の`skipped`として伝播し、成功扱いになる |
 | 変更検出jobが "Resource not accessible by integration" | そのjobへ`pull-requests: read`を付けているか |
 | sourceを変えていないのにある日CIが落ちる | runtime・actionの版が`latest`追随になっていないか |
 | localでは通るがCIだけ落ちる | DB engine、timezone、実行時刻に依存していないか。日付境界の不具合は特定時間帯のrunだけ再現する |
@@ -341,6 +345,7 @@ concurrency:
 - lock fileとmanifestを意図的にずらすとinstallが失敗する
 - modelを変更してmigrationを作らないと`makemigrations --check`が失敗する
 - required checkにしたcheckが、対象外の変更だけのPRでも報告される（pendingで止まらない）
+- 変更検出jobをわざと失敗させると、集約jobも失敗する（skipとして握り潰されない）
 - runtimeの版をrepositoryのfileで変更すると、CIで動く版も変わる
 - image内の成果物確認を意図的に壊すとjobが失敗する
 
