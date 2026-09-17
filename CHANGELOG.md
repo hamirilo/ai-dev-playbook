@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/hamirilo/ai-dev-playbook/compare/v1.3.0...v1.3.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* allow manual release version override ([#23](https://github.com/hamirilo/ai-dev-playbook/issues/23)) ([24df8fe](https://github.com/hamirilo/ai-dev-playbook/commit/24df8fe6811e933215cfb149881f898bdcab1be4))
+
 ## [1.3.0](https://github.com/hamirilo/ai-dev-playbook/compare/v1.2.2...v1.3.0) (2026-09-13)
 
 
