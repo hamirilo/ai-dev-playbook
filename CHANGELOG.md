@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/hamirilo/ai-dev-playbook/compare/v1.3.1...v1.3.2) (2026-09-21)
+
+
+### Bug Fixes
+
+* CIパイプラインのPlaybookをpaths-filter v4へ合わせる ([#25](https://github.com/hamirilo/ai-dev-playbook/issues/25)) ([30f8421](https://github.com/hamirilo/ai-dev-playbook/commit/30f842163620437e9619187c6a135df9e7a5fe94))
+
 ## [1.3.1](https://github.com/hamirilo/ai-dev-playbook/compare/v1.3.0...v1.3.1) (2026-09-17)
 
 
