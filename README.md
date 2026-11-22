@@ -1,3 +1,5 @@
+> 移行先: [hamirilo/hamirilo-platform](https://github.com/hamirilo/hamirilo-platform) の `CLAUDE.md（ルート）`
+
 # AI Development Playbook
 
 複数のWeb ApplicationをAI支援で開発するときに、毎回同じ実装・移行・検証・障害対応を考え直さないためのPlaybookです。
